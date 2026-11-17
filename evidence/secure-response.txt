@@ -1,0 +1,19 @@
+﻿PAPERNEST IDOR LAB - SECURE MODE
+================================
+
+Test user: Bob
+Authentication: bob-demo-token
+Requested invoice: inv_A17
+Invoice owner: Alice
+
+HTTP RESPONSE:
+HTTP/1.0 404 Not Found
+
+RESPONSE BODY:
+{"error": "Invoice not found"}
+
+RESULT:
+UNAUTHORIZED ACCESS BLOCKED.
+
+Bob could not access Alice's invoice.
+The server enforced invoice ownership authorization.

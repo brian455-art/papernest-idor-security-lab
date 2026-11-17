@@ -1,0 +1,18 @@
+﻿PAPERNEST IDOR LAB - VULNERABLE MODE
+====================================
+
+Test user: Bob
+Authentication: bob-demo-token
+Requested invoice: inv_A17
+Invoice owner: Alice
+
+HTTP RESPONSE:
+HTTP/1.0 200 OK
+
+RESPONSE BODY:
+{"id": "inv_A17", "owner": "Alice", "description": "Alice test invoice", "total": "$12.00"}
+
+RESULT:
+VULNERABILITY CONFIRMED.
+
+Bob successfully accessed Alice's invoice while authenticated as Bob.
