@@ -1,182 +1,194 @@
-\# PaperNest - IDOR Security Lab
+# PaperNest — IDOR / BOLA Security Lab
 
+A practical Python security lab demonstrating Insecure Direct Object Reference (IDOR), also known as Broken Object Level Authorization (BOLA), through vulnerable and secure API implementations.
 
+## Project Overview
 
-\## Project Overview
+PaperNest is a deliberately vulnerable, localhost-only invoice API built to demonstrate how missing authorization checks can expose another user's private information.
 
+The lab uses two fictional users, Alice and Bob, and compares two application modes:
 
+- **Vulnerable mode:** Authenticated users can access invoices belonging to other users.
+- **Secure mode:** The application verifies invoice ownership before returning invoice data.
 
-PaperNest is a beginner-friendly Python application demonstrating Insecure Direct Object Reference (IDOR).
+The application runs on `127.0.0.1:8765` and uses fictional data only.
 
+## Learning Objectives
 
+- Understand authentication versus authorization.
+- Understand IDOR and BOLA vulnerabilities.
+- Test object-level access controls using two accounts.
+- Inspect HTTP requests and responses.
+- Identify missing server-side ownership checks.
+- Implement and verify an authorization fix.
+- Produce reproducible security evidence and reports.
 
-It compares a vulnerable application with a secure application using two fictional users.
+## Technology Stack
 
+| Component | Technology |
+|---|---|
+| Operating system | Windows 11 |
+| Programming language | Python |
+| HTTP server | Python `http.server` |
+| Testing tool | `curl.exe` |
+| Network scope | Localhost only |
+| Port | 8765 |
 
+## Lab Architecture
 
-Everything runs locally on 127.0.0.1.
+The application contains:
 
+- Alice's fictional account and invoice.
+- Bob's fictional account and invoice.
+- Bearer-token authentication.
+- An invoice API endpoint.
+- A vulnerable authorization implementation.
+- A secure ownership-check implementation.
 
+### Fictional Test Accounts
 
-\## Learning Objectives
-
-
-
-\- Understand authentication and authorization.
-
-\- Demonstrate an IDOR vulnerability.
-
-\- Test access controls using two accounts.
-
-\- Inspect HTTP requests and responses.
-
-\- Implement server-side ownership checks.
-
-\- Document security findings.
-
-
-
-\## Lab Environment
-
-
-
-\- Operating System: Windows 11
-
-\- Language: Python
-
-\- Testing tool: curl.exe
-
-\- Network: Localhost only
-
-\- Port: 8765
-
-
-
-\## Fictional Accounts
-
-
-
-| User | Token | Invoice |
-
+| User | Demo token | Own invoice |
 |---|---|---|
+| Alice | `alice-demo-token` | `inv_A17` |
+| Bob | `bob-demo-token` | `inv_B29` |
 
-| Alice | alice-demo-token | inv\_A17 |
+These tokens are for this local educational lab only.
 
-| Bob | bob-demo-token | inv\_B29 |
+## Installation and Execution
 
+Ensure Python is installed.
 
+Open PowerShell in the project directory.
 
-\## Run the Application
+### 1. Start vulnerable mode
 
+```powershell
+py .\papernest.py vulnerable
+```
 
+### 2. Start secure mode
 
-Start vulnerable mode:
+Stop the previous server with `Ctrl+C`, then run:
 
+```powershell
+py .\papernest.py secure
+```
 
+The server listens at:
 
-`py .\\papernest.py vulnerable`
+`http://127.0.0.1:8765`
 
+## Vulnerability Reproduction
 
+### Test: Bob attempts to access Alice's invoice
 
-Start secure mode:
+Run this command while either application mode is running:
 
+```powershell
+curl.exe -i -H "Authorization: Bearer bob-demo-token" http://127.0.0.1:8765/invoice/inv_A17
+```
 
+### Vulnerable mode — Expected result
 
-`py .\\papernest.py secure`
+```http
+HTTP/1.0 200 OK
+```
 
+The server returns Alice's invoice to Bob.
 
+**Security impact:** An authenticated user can access another user's invoice because the application does not enforce object ownership.
 
-Stop the application using Ctrl+C.
+[View vulnerable response evidence](evidence/vulnerable-response.txt)
 
+![Vulnerable IDOR response](evidence/idor-vulnerable.png)
 
+### Secure mode — Expected result
 
-\## IDOR Test
+```http
+HTTP/1.0 404 Not Found
+```
 
+The server refuses to return Alice's invoice to Bob.
 
+**Security improvement:** The application verifies that the authenticated user owns the requested invoice.
 
-Bob requests Alice's invoice:
+[View secure response evidence](evidence/secure-response.txt)
 
+![Secure authorization response](evidence/idor-secure.png)
 
+## Root Cause Analysis
 
-`curl.exe -i -H "Authorization: Bearer bob-demo-token" http://127.0.0.1:8765/invoice/inv\_A17`
+The vulnerable implementation authenticates the user but fails to verify authorization for the requested invoice.
 
+Authentication answers:
 
+**Who are you?**
 
-\### Vulnerable result
+Authorization answers:
 
+**Are you allowed to access this resource?**
 
+The vulnerability occurs because authentication is implemented without the required object-level ownership check.
 
-HTTP 200 OK. Alice's invoice is exposed.
+## Remediation
 
+The secure implementation checks ownership before returning invoice information:
 
+```python
+if MODE == "secure" and invoice["owner"] != current_user:
+    return self.send_json(404, {"error": "Invoice not found"})
+```
 
-\### Secure result
+Production applications should enforce object-level authorization on every request that accesses or modifies a protected resource.
 
+Additional security recommendations:
 
+- Derive the authenticated identity from a securely validated session or token.
+- Check ownership or permissions on the server.
+- Apply authorization checks to read, update, and delete operations.
+- Avoid relying on hidden IDs or unpredictable identifiers as security controls.
+- Add automated tests for cross-user access attempts.
 
-HTTP 404 Not Found. Access is denied.
+## Evidence Directory
 
+```text
+evidence/
+├── vulnerable-response.txt
+├── secure-response.txt
+├── idor-vulnerable.png
+└── idor-secure.png
+```
 
+## Skills Demonstrated
 
-\## Root Cause
+- Python programming
+- HTTP request and response analysis
+- REST API security
+- Authentication and authorization
+- IDOR / BOLA vulnerability testing
+- Access-control validation
+- Vulnerability documentation
+- Secure coding principles
+- Git and GitHub portfolio management
 
+## Limitations
 
+This is a deliberately simplified educational application. It is not a production authentication system and does not represent a complete assessment of a real-world API.
 
-The vulnerable implementation authenticates Bob but does not verify whether he owns the requested invoice.
+The results demonstrate the behavior of this local application only.
 
+## Safety and Authorization
 
+This project uses fictional users, fictional invoices, and a local-only server bound to `127.0.0.1`.
 
-\## Remediation
-
-
-
-The secure implementation checks invoice ownership before returning invoice information.
-
-
-
-\## Evidence
-
-
-
-See the evidence folder:
-
-
-
-\- vulnerable-response.txt
-
-\- secure-response.txt
-
-
-
-\## Skills Demonstrated
-
-
-
-\- Python
-
-\- HTTP
-
-\- REST API security
-
-\- Authentication
-
-\- Authorization
-
-\- IDOR testing
-
-\- Security reporting
-
-\- Secure coding
-
-
-
-\## Safety
-
-
-
-This educational project uses fictional data and localhost only.
-
-
+No external systems or real user data are involved.
 
 Only test systems for which you have explicit authorization.
 
+## Author
+
+**BrianSecLabs**
+
+Cybersecurity learner | API Security | Vulnerability Research
+
+GitHub: [brian455-art](https://github.com/brian455-art)
